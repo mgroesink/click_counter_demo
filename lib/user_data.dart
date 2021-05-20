@@ -1,44 +1,69 @@
 import 'package:flutter/material.dart';
 import 'package:dropdown_date_picker/dropdown_date_picker.dart';
+import 'helpers/shareded_prefs_utils.dart';
 
 class UserData extends StatefulWidget {
-  const UserData({Key key}) : super(key: key);
-
+  const UserData({Key key, this.clicks}) : super(key: key);
+  final int clicks;
   @override
   _UserDataState createState() => _UserDataState();
 }
 
 class _UserDataState extends State<UserData> {
   TextEditingController nameController = TextEditingController();
-  DropdownDatePicker datePicker = DropdownDatePicker(
-    firstDate: ValidDate(year: DateTime.now().year - 100, month: 1, day: 1),
-    lastDate: ValidDate(
-        year: DateTime.now().year,
-        month: DateTime.now().month,
-        day: DateTime.now().day),
-    dateFormat: DateFormat.dmy,
-    dateHint: DateHint(year: 'year', month: 'month', day: 'day'),
-    dropdownColor: Colors.red,
+  TextEditingController emailController = TextEditingController();
+  TextEditingController birthdateController = TextEditingController();
 
-  );
+  String birthdate = "";
+  void readUserData() {
+    MySharedPreferences.instance
+        .getStringValue("birthdate")
+        .then((value) => setState(() {
+              print(value.replaceAll('-', ''));
+              birthdate = value;
+            }));
+
+    MySharedPreferences.instance
+        .getStringValue("birthdate")
+        .then((value) => setState(() {
+              if (value != null) {
+                //TODO: set currentdate for datefield
+                birthdateController.text = value;
+              }
+            }));
+    MySharedPreferences.instance
+        .getStringValue("name")
+        .then((value) => setState(() {
+              nameController.text = value;
+            }));
+    MySharedPreferences.instance
+        .getStringValue("email")
+        .then((value) => setState(() {
+              emailController.text = value;
+            }));
+  }
+
+  void initState() {
+    super.initState();
+    readUserData();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-          appBar: AppBar(
-            title: Text('User data'),
-          ),
-          body: Padding(
-            padding: const EdgeInsets.all(24.0),
+        appBar: AppBar(
+          title: Text('User data'),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Name',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
                 TextField(
+                  controller: nameController,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Your name',
@@ -47,11 +72,8 @@ class _UserDataState extends State<UserData> {
                 SizedBox(
                   height: 16.0,
                 ),
-                Text(
-                  'Email',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
                 TextField(
+                  controller: emailController,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Your emailaddress',
@@ -60,19 +82,42 @@ class _UserDataState extends State<UserData> {
                 SizedBox(
                   height: 16.0,
                 ),
-                Text(
-                  'Birthdate',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                TextField(
+                  onTap: () async {
+                    var date = await showDatePicker(
+                        context: context,
+                        initialDate:
+                            DateTime.parse(birthdate) ?? DateTime.now(),
+                        firstDate: DateTime(1900),
+                        lastDate: DateTime(2100));
+                    birthdateController.text = date.toString().substring(0, 10);
+                  },
+                  controller: birthdateController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Your birthdate',
+                  ),
                 ),
-                datePicker,
-                //
-
                 SizedBox(
                   height: 16.0,
                 ),
+                Text('Number of clicks: ${widget.clicks}'),
+                IconButton(
+                  onPressed: () {
+                    MySharedPreferences.instance
+                        .setStringValue("birthdate", birthdateController.text);
+                    MySharedPreferences.instance
+                        .setStringValue("name", nameController.text);
+                    MySharedPreferences.instance
+                        .setStringValue("email", emailController.text);
+                  },
+                  icon: Icon(Icons.save),
+                ),
               ],
             ),
-          )),
+          ),
+        ),
+      ),
     );
   }
 }

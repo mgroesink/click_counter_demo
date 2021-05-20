@@ -1,6 +1,8 @@
 import 'package:click_counter_demo/user_data.dart';
 import 'package:flutter/material.dart';
 
+import 'helpers/shareded_prefs_utils.dart';
+
 void main() {
   runApp(MyApp());
 }
@@ -61,11 +63,17 @@ class _MyHomePageState extends State<MyHomePage> {
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
       _counter++;
+      MySharedPreferences.instance.setIntegerValue('clicks', _counter);
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    MySharedPreferences.instance
+        .getIntegerValue('clicks')
+        .then((value) => setState(() {
+              _counter = value;
+            }));
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -84,7 +92,9 @@ class _MyHomePageState extends State<MyHomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => UserData(),
+                  builder: (context) => UserData(
+                    clicks: _counter,
+                  ),
                 ),
               );
             },
